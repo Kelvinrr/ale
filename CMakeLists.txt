@@ -20,16 +20,22 @@ find_package(Eigen3 3.3    REQUIRED NO_MODULE)
 find_package(Python        REQUIRED COMPONENTS Development)
 find_package(nlohmann_json REQUIRED)
 
+set(ALE_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/")
+
 # Library setup
 add_library(ale SHARED
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ale.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/Rotation.cpp)
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/rotation.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/isd.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/util.cpp)
+
 # Alias a scoped target for safer linking in downstream projects
-set(ALE_HEADERS "include/ale.h, include/Rotation.h")
+
 set_target_properties(ale PROPERTIES
                       VERSION       ${PROJECT_VERSION}
                       SOVERSION     0
-                      PUBLIC_HEADER ${ALE_HEADERS})
+                      INCLUDE_DIRECTORIES ${ALE_HEADERS})
+
 # Use generator expressions so that downstream projects can use this target
 target_include_directories(ale
                            PUBLIC

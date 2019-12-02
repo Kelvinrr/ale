@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "ale.h"
+#include "isd.h"
 
 #include <stdexcept>
 #include <cmath>
@@ -11,6 +12,7 @@
 #include <Eigen/Geometry>
 
 using namespace std;
+
 
 TEST(PositionInterpTest, LinearInterp) {
   vector<double> times = { -3, -2, -1,  0,  1,  2};
