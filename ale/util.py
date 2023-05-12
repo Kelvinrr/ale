@@ -78,58 +78,6 @@ def get_isis_preferences(isis_preferences=None):
     return finalprefs
 
 
-def dict_to_lower(d):
-    return {k.lower():v if not isinstance(v, dict) else dict_to_lower(v) for k,v in d.items()}
-
-
-def expandvars(path, env_dict=os.environ, default=None, case_sensitive=True):
-    user_dict = env_dict if case_sensitive else dict_to_lower(env_dict)
-
-    def replace_var(m):
-        group0 = m.group(0) if case_sensitive else m.group(0).lower()
-        group1 = m.group(1) if case_sensitive else m.group(1).lower()
-
-        return user_dict.get(m.group(2) or group1, group0 if default is None else default)
-    reVar = r'\$(\w+|\{([^}]*)\})'
-    return re.sub(reVar, replace_var, path)
-
-
-def write_metakernel_from_cube(cube, mkpath=None):
-    # add ISISPREF paths as path_symbols and path_values to avoid custom expand logic
-    pvlprefs = get_isis_preferences()
-
-    kernels = generate_kernels_from_cube(cube)
-
-    # make sure kernels are mk strings
-    kernels = ["'"+k+"'" for k in kernels]
-
-    paths = OrderedDict(pvlprefs['DataDirectory'])
-    path_values = ["'"+os.path.expandvars(path)+"'" for path in paths.values()]
-    path_symbols = ["'"+symbol.lower()+"'" for symbol in paths.keys()]
-
-    body = '\n\n'.join([
-        'KPL/MK',
-        f'Metakernel Generated from an ISIS cube: {cube}',
-        '\\begindata',
-        'PATH_VALUES = (',
-        '\n'.join(path_values),
-        ')',
-        'PATH_SYMBOLS = (',
-        '\n'.join(path_symbols),
-        ')',
-        'KERNELS_TO_LOAD = (',
-        '\n'.join(kernels),
-        ')',
-        '\\begintext'
-    ])
-
-    if mkpath is not None:
-        with open(mkpath, 'w') as f:
-            f.write(body)
-
-    return body
-
-
 def get_ck_frames(kernel):
     """
     Get all of the reference frames defined in a kernel.
