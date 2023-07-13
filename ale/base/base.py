@@ -1,5 +1,7 @@
 import json
 
+from multiprocessing.pool import ThreadPool
+
 class Driver():
     """
     Base class for all Drivers.
@@ -33,6 +35,28 @@ class Driver():
         if parsed_label:
             self._label = parsed_label
 
+    def to_dict(self, properties=[]):
+        def get_property(prop_name): 
+            try:
+                return getattr(self, prop_name)
+            except:
+                return None
+
+        if not properties:
+            for attr in dir(self):
+              if isinstance(getattr(self.__class__, attr, None), property):
+                  properties.append(attr)
+
+        data = {}
+      
+        with ThreadPool() as pool:
+            jobs = pool.starmap_async(get_property, [(name,) for name in properties])
+            jobs = jobs.get()
+
+            for result, property_name in zip(jobs, properties):
+                data[property_name] = result
+        return data 
+    
     @property
     def image_lines(self):
         """

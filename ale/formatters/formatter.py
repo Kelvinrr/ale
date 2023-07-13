@@ -1,6 +1,7 @@
 import json
 import numpy as np
 from scipy.interpolate import interp1d, BPoly
+import time 
 
 from networkx.algorithms.shortest_paths.generic import shortest_path
 
@@ -22,7 +23,9 @@ def to_isd(driver):
     string
         The ISIS compatible meta data as a JSON encoded string.
     """
-
+    
+    data = driver.to_dict(["sensor_position", "sun_position", "frame_chain", "naif_keywords"])
+    
     meta_data = {}
 
     meta_data['isis_camera_version'] = driver.sensor_model_version
@@ -86,7 +89,7 @@ def to_isd(driver):
         'unit' : 'km'
     }
 
-    frame_chain = driver.frame_chain
+    frame_chain = data["frame_chain"]
     target_frame = driver.target_frame_id
 
     body_rotation = {}
@@ -142,7 +145,7 @@ def to_isd(driver):
     meta_data['instrument_pointing'] = instrument_pointing
 
     # interiror orientation
-    meta_data['naif_keywords'] = driver.naif_keywords
+    meta_data['naif_keywords'] = data["naif_keywords"]
 
     if isinstance(driver,LineScanner) or isinstance(driver, Framer) or isinstance(driver, PushFrame):
 
@@ -163,11 +166,10 @@ def to_isd(driver):
         meta_data['starting_detector_line'] = driver.detector_start_line
         meta_data['starting_detector_sample'] = driver.detector_start_sample
     
-
     j2000_rotation = frame_chain.compute_rotation(target_frame, 1)
 
     instrument_position = {}
-    positions, velocities, times = driver.sensor_position
+    positions, velocities, times = data["sensor_position"]
     instrument_position['spk_table_start_time'] = times[0]
     instrument_position['spk_table_end_time'] = times[-1]
     instrument_position['spk_table_original_size'] = len(times)
@@ -178,11 +180,11 @@ def to_isd(driver):
     instrument_position['positions'] = positions
     instrument_position['velocities'] = velocities
     instrument_position["reference_frame"] = j2000_rotation.dest
-
+    
     meta_data['instrument_position'] = instrument_position
-
+    
     sun_position = {}
-    positions, velocities, times = driver.sun_position
+    positions, velocities, times = data["sun_position"]
     sun_position['spk_table_start_time'] = times[0]
     sun_position['spk_table_end_time'] = times[-1]
     sun_position['spk_table_original_size'] = len(times)
@@ -195,7 +197,6 @@ def to_isd(driver):
     sun_position["reference_frame"] = j2000_rotation.dest
 
     meta_data['sun_position'] = sun_position
-
 
     # check that there is a valid sensor model name
     if 'name_model' not in meta_data:
